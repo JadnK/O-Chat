@@ -3,4 +3,5 @@ export type Message = {
   user: string
   text: string
   ts: number
+  type?: 'user' | 'system'
 }

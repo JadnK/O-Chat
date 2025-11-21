@@ -1,8 +1,9 @@
 import React from 'react'
 import { Outlet, Link } from 'react-router-dom'
 import { useActiveRooms } from './hooks/useActiveRooms.ts'
+import { UserProvider } from './context/UserContext.tsx'
 
-export default function App() {
+function AppContent() {
   const rooms = useActiveRooms()
 
   return (
@@ -28,5 +29,13 @@ export default function App() {
         <Outlet />
       </main>
     </div>
+  )
+}
+
+export default function App() {
+  return (
+    <UserProvider>
+      <AppContent />
+    </UserProvider>
   )
 }
