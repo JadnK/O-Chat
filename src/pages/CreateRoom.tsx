@@ -1,47 +1,40 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { nanoid } from 'nanoid'
+import { io } from 'socket.io-client'
+
+const SERVER_URL = 'http://localhost:3000'
 
 export default function CreateRoom() {
-    const [name, setName] = useState('')
-    const [password, setPassword] = useState('')
-    const navigate = useNavigate()
+  const [name, setName] = useState('')
+  const [roomName, setRoomName] = useState('')
+  const [type, setType] = useState<'public'|'private'>('public')
+  const [password, setPassword] = useState('')
+  const navigate = useNavigate()
+  const socket = io(SERVER_URL)
 
-    const createRoom = () => {
-        if (!name.trim()) return
-        const roomId = nanoid(6) // generates 6-char unique room ID
-        // encode password in query for simplicity (optional: later hash)
-        navigate(`/room/${roomId}?name=${encodeURIComponent(name)}&pwd=${encodeURIComponent(password)}`)
-    }
+  const createRoom = () => {
+    if (!roomName.trim() || !name.trim()) return
+    const id = nanoid(6)
+    socket.emit('createRoom', { id, name: roomName, type, password })
+    navigate(`/room/${id}?name=${encodeURIComponent(name)}${type==='private'?`&pwd=${password}`:''}`)
+  }
 
-    return (
-        <div className="flex flex-col items-center justify-center min-h-[70vh]">
-            <h1 className="text-4xl font-bold mb-6">Create a New Room</h1>
-
-            <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md space-y-4">
-                <input
-                    type="text"
-                    placeholder="Your Name"
-                    className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                />
-
-                <input
-                    type="password"
-                    placeholder="Room Password (optional)"
-                    className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                />
-
-                <button
-                    onClick={createRoom}
-                    className="w-full bg-green-500 text-white py-2 rounded-md hover:bg-green-600 transition"
-                >
-                    Create Room
-                </button>
-            </div>
-        </div>
-    )
+  return (
+    <div className="max-w-md mx-auto bg-gray-800 p-6 rounded-xl shadow-md space-y-4">
+      <h2 className="text-2xl font-bold">Create Room</h2>
+      <input type="text" placeholder="Your Name" value={name} onChange={e=>setName(e.target.value)}
+        className="w-full px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"/>
+      <input type="text" placeholder="Room Name" value={roomName} onChange={e=>setRoomName(e.target.value)}
+        className="w-full px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"/>
+      <div className="flex space-x-4">
+        <label><input type="radio" checked={type==='public'} onChange={()=>setType('public')}/> Public</label>
+        <label><input type="radio" checked={type==='private'} onChange={()=>setType('private')}/> Private</label>
+      </div>
+      {type==='private' && <input type="password" value={password} onChange={e=>setPassword(e.target.value)}
+        className="w-full px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-red-400"
+        placeholder="Password"/>}
+      <button onClick={createRoom} className="w-full bg-green-500 hover:bg-green-600 py-2 rounded-md">Create</button>
+    </div>
+  )
 }
